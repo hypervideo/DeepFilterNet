@@ -107,3 +107,31 @@ pub unsafe fn df_process_frame(st: *mut DFState, input: &[f32]) -> js_sys::Float
     let _lsnr = state.0.process(input, output_view).expect("Failed to process DF frame");
     js_sys::Float32Array::from(output.as_slice().unwrap())
 }
+
+#[wasm_bindgen]
+/// Processes a chunk of samples in-place using SharedArrayBuffer on the Javascript side.
+///
+/// # Arguments
+/// * `st` - Pointer to DFState (created via `df_create()`).
+/// * `input` - A slice of `f32` representing the input audio frame.
+/// * `output` - A mutable slice of `f32` for the processed audio frame. Must be the same length as `input`.
+///
+/// # Returns
+/// * A `f32` value representing the local SNR or another status metric for the processed frame.
+pub unsafe fn df_process_frame_sharedarraybuffer(
+    st: *mut DFState,
+    input: &[f32],
+    output: &mut [f32]
+) -> f32 {
+    let state = st.as_mut().expect("Invalid pointer to DFState");
+
+    let input_view = ndarray::ArrayView2::from_shape((1, state.0.hop_size), input)
+        .expect("Unable to create input view with shape (1, hop_size)");
+    let output_view = ndarray::ArrayViewMut2::from_shape((1, state.0.hop_size), output)
+        .expect("Unable to create output view with shape (1, hop_size)");
+
+    let lsnr = state.0.process(input_view, output_view)
+        .expect("Failed to process DF frame");
+
+    lsnr
+}

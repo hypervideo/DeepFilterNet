@@ -163,3 +163,6 @@ assets = [
     "644",
   ],
 ]
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = ['--enable-simd', '-O4']

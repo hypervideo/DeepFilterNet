@@ -40,6 +40,27 @@ pub unsafe fn df_create(
     Box::into_raw(df.boxed())
 }
 
+/// Create a DeepFilterNet Model with the weights built-in
+///
+/// Args:
+///    - atten_lim: Attenuation limit in dB.
+///
+/// Returns:
+///   - DF state doing the full processing: stft, DNN noise reduction, istft.
+#[wasm_bindgen]
+pub unsafe fn df_create_with_weights(
+    atten_lim: f32,
+) -> *mut DFState {
+     // Simply embed the model bytes directly in the Wasm build.
+     let df = DFState::new(
+        include_bytes!("../../models/DeepFilterNet3_onnx.tar.gz"),
+        //include_bytes!("../../models/DeepFilterNet3_ll_onnx.tar.gz"),
+        1,
+        atten_lim,
+    );
+    Box::into_raw(df.boxed())
+}
+
 /// Get DeepFilterNet frame size in samples.
 #[wasm_bindgen]
 pub unsafe fn df_get_frame_length(st: *mut DFState) -> usize {

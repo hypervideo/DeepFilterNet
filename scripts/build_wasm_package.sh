@@ -1,5 +1,11 @@
-#!/bin/sh -ex
+#!/bin/env bash
 
-# look at DeepFilterNet/.github/workflows/build_wasm.yml for enviroment setup
+set -Eou pipefail
+set -x
+
 cd ./libDF/
-wasm-pack build --target no-modules --features wasm
+
+# see '../.cargo/config.toml' for RUSTFLAGS
+
+# cargo clean
+wasm-pack build --target web --no-typescript --features "wasm"

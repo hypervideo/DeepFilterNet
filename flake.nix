@@ -31,6 +31,32 @@
 
       python = pkgs.python312;
 
+      coreAudio =
+        if pkgs.stdenv.isDarwin then
+        # pkgs.symlinkJoin
+          pkgs.buildEnv
+            {
+              name = "sdk";
+              paths = with pkgs.darwin.apple_sdk.frameworks; [
+                CoreFoundation
+                CoreServices
+                SystemConfiguration
+                Security
+                AudioToolbox
+                AudioUnit
+                CoreAudio
+                CoreFoundation
+                CoreMIDI
+                OpenAL
+              ];
+              postBuild = ''
+                # mkdir $out/System
+                ln -s $out/Library $out/System
+              '';
+            }
+        else
+          "";
+
       buildInputs = {
         nativeBuildInputs = with pkgs; [
           rust-toolchain
@@ -45,25 +71,27 @@
         buildInputs = with pkgs; [
           openssl
           clang
-          alsa-lib
-          hdf5
-        ] ++ (if pkgs.stdenv.isDarwin then [ libiconv ] else [ ]);
+        ] ++ (if pkgs.stdenv.isDarwin then [ libiconv coreAudio ] else [ alsa-lib ]);
 
         wasm-bindgen-cli = pkgs.wasm-bindgen-cli;
       };
+
+      cargoExtraArgs = "-p deep_filter --no-default-features --features wasm,default-model --target wasm32-unknown-unknown";
 
       libDF-deps = craneLib.buildDepsOnly (buildInputs // {
         pname = "libDF-deps";
         cargoToml = ./libDF/Cargo.toml;
         src = ./.;
         doCheck = false;
+        inherit cargoExtraArgs;
       });
 
       libDF = craneLib.buildPackage (buildInputs // {
         cargoToml = ./libDF/Cargo.toml;
         src = ./.;
-        cargoArtifacts = libDF-deps;
         doCheck = false;
+        cargoArtifacts = libDF-deps;
+        inherit cargoExtraArgs;
 
         doNotPostBuildInstallCargoBinaries = true;
 
